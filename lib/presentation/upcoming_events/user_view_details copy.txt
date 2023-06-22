@@ -1,0 +1,146 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:vie_fashion_week/bloc/upcoming_events/detail_bloc/bloc/detail_page_bloc.dart';
+import 'package:vie_fashion_week/data/models/event.dart';
+import 'package:intl/intl.dart';
+import '../../data/models/user.dart';
+import '../../data/repositories/event_repository.dart';
+
+class UserViewPage extends StatefulWidget {
+  final bool isSelected;
+  final Events event;
+  const UserViewPage({Key? key, required this.isSelected, required this.event})
+      : super(key: key);
+
+  @override
+  State<UserViewPage> createState() => _UserViewPageState();
+}
+
+class _UserViewPageState extends State<UserViewPage> {
+  final boldStyle =
+      const TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold);
+  final EventsRepository eventsRepository = EventsRepository();
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (context) => DetailPageBloc(eventsRepository: eventsRepository),
+      child: _bodyEvent(),
+    );
+  }
+
+  Widget _bodyEvent() {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Event Details"),
+      ),
+      body: BlocListener<DetailPageBloc, DetailPageState>(
+        listener: (context, state) {
+          if (state is AfterDatabaseUpdate) {
+            Navigator.pop(context);
+          }
+        },
+        child: BlocBuilder<DetailPageBloc, DetailPageState>(
+          builder: (context, state) {
+            if (state is Loading) {
+              return const Center(
+                child: CircularProgressIndicator(),
+              );
+            }
+            if (state is DetailPageInitial) {
+              BlocProvider.of<DetailPageBloc>(context).add(OnPageLoad());
+            }
+            if (state is AfterPageLoad) {
+              return _finalBody(context, state);
+            }
+            return const Center(child: LinearProgressIndicator());
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _finalBody(BuildContext context, AfterPageLoad state) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(25, 3, 25, 15),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Row(
+            // mainAxisSize: MainAxisSize.max,
+            children: <Widget>[
+              Container(
+                color: Colors.blueAccent,
+                margin: const EdgeInsets.fromLTRB(0, 15, 0, 5),
+                padding: const EdgeInsets.all(10.0),
+                //decoration:
+                // BoxDecoration(border: Border.all(color: Colors.blueAccent)),
+                child: Text(DateFormat('dd-MM-yyyy')
+                    .format(widget.event.date)
+                    .toString()),
+              ),
+              Container(
+                margin: const EdgeInsets.fromLTRB(0, 15, 0, 5),
+                padding: const EdgeInsets.all(10.0),
+                width: MediaQuery.of(context).size.width * 0.599,
+                height: MediaQuery.of(context).size.width * 0.1,
+                decoration:
+                    BoxDecoration(border: Border.all(color: Colors.blueAccent)),
+                child: Text(widget.event.name),
+              )
+            ],
+          ),
+          Container(
+            margin: const EdgeInsets.fromLTRB(0, 5, 0, 15),
+            padding: const EdgeInsets.all(5.0),
+            width: MediaQuery.of(context).size.height * 0.25,
+            decoration:
+                BoxDecoration(border: Border.all(color: Colors.blueAccent)),
+            child: Text(widget.event.description),
+          ),
+          const SizedBox(
+            height: 10,
+          ),
+          _registerLogic(context, state),
+        ],
+      ),
+    );
+    // return Container(color: widget.isSelected ? Colors.red : Colors.green);
+  }
+
+  Widget _registerLogic(BuildContext context, AfterPageLoad state) {
+    if (widget.isSelected) {
+      return ElevatedButton(
+        child: const Text('Deregister'),
+        onPressed: () {
+          state.userFA.events
+              .removeWhere((item) => item.eventId == widget.event.referenceID);
+          context.read<DetailPageBloc>().add(UpdateUser(userFA: state.userFA));
+        },
+        style: ButtonStyle(
+            backgroundColor: MaterialStateProperty.all(Colors.green),
+            padding: MaterialStateProperty.all(const EdgeInsets.all(15)),
+            textStyle:
+                MaterialStateProperty.all(const TextStyle(fontSize: 25))),
+      );
+    } else {
+      return ElevatedButton(
+        child: const Text('Register'),
+        onPressed: () {
+          state.userFA.events.add(UserEvent(
+              event: widget.event.name, eventId: widget.event.referenceID!));
+          context.read<DetailPageBloc>().add(UpdateUser(userFA: state.userFA));
+        },
+        style: ButtonStyle(
+            backgroundColor: MaterialStateProperty.all(Colors.red),
+            padding: MaterialStateProperty.all(const EdgeInsets.all(15)),
+            textStyle:
+                MaterialStateProperty.all(const TextStyle(fontSize: 25))),
+      );
+    }
+  }
+}

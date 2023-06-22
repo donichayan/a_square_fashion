@@ -1,0 +1,145 @@
+//import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:vie_fashion_week/bloc/upcoming_events/bloc/upcomingevent_bloc.dart';
+//import 'package:vie_fashion_week/data/models/event.dart';
+import 'package:vie_fashion_week/data/repositories/event_repository.dart';
+import 'package:intl/intl.dart';
+import '../../data/models/user.dart';
+import 'user_view_details.dart';
+
+class UpcomingEvents extends StatefulWidget {
+  const UpcomingEvents({Key? key}) : super(key: key);
+
+  @override
+  State<UpcomingEvents> createState() => _UpcomingEventsState();
+}
+
+class _UpcomingEventsState extends State<UpcomingEvents> {
+  final boldStyle =
+      const TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold);
+  final EventsRepository eventsRepository = EventsRepository();
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider<UpcomingeventBloc>(
+      create: (context) =>
+          UpcomingeventBloc(eventsRepository: eventsRepository),
+      child: _bodyUpcomingEvent(),
+    );
+  }
+
+  Widget _bodyUpcomingEvent() {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Upcoming Events"),
+      ),
+      body: BlocListener<UpcomingeventBloc, UpcomingeventState>(
+          listener: (context, state) {
+        if (state is DatabaseError) {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(state.errorMessage)));
+        }
+        if (state is CallDetailPage) {
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => UserViewPage(
+                      isSelected: state.isSelected, event: state.event)));
+        }
+        /*  if (state is DatabaseSuccess) {
+        _listBuilder(state);
+        } */
+      }, child: BlocBuilder<UpcomingeventBloc, UpcomingeventState>(
+              builder: (context, state) {
+        if (state is DatabaseSucceeded) {
+          context.read<UpcomingeventBloc>().add(DatabaseFetched());
+        }
+        if (state is UpcomingeventInitial) {
+          context.read<UpcomingeventBloc>().add(DatabaseFetched());
+          return const Center(
+              child: LinearProgressIndicator(
+            color: Colors.blueGrey,
+          ));
+        }
+        if (state is DatabaseSucceeded) {
+          return _listBuilder(state);
+        }
+        return const Center(child: CircularProgressIndicator());
+
+        // return const Center(child: Text("Nothing to Display"));
+      })),
+    );
+  }
+
+  _listBuilder(DatabaseSucceeded state) {
+    return Center(
+      child: ListView.builder(
+        itemCount: state.listOfEvents.length,
+        itemBuilder: (BuildContext context, int index) {
+          var cardColor = _colorLogic(
+              state.userEvents, state.listOfEvents[index].referenceID!);
+
+          return Card(
+            color: cardColor,
+            child: InkWell(
+              onTap: () => {
+                context.read<UpcomingeventBloc>().add(OnTapOnCard(
+                    _colorProcessing(cardColor), state.listOfEvents[index]))
+              },
+              child: ListTile(
+                title: Text(state.listOfEvents[index].name.trim()),
+                subtitle: Text(state.listOfEvents[index].venue.trim()),
+                trailing: Text(DateFormat('dd-MM-yyyy')
+                    .format(state.listOfEvents[index].date)
+                    .toString()),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  _colorProcessing(dynamic color) {
+    if (color == Colors.red) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  /* Widget _buildList(BuildContext context, List<DocumentSnapshot> snapshot) {
+    return ListView(
+      padding: const EdgeInsets.only(top: 20.0),
+      children: snapshot.map((data) => _buildListItem(context, data)).toList(),
+    );
+  }
+
+  Widget _buildListItem(BuildContext context, DocumentSnapshot snapshot) {
+    final eventUp = Events.fromSnapshot(snapshot);
+
+    return Text(eventUp.name);
+  } */
+  _colorLogic(List<UserEvent> userEvents, String eventID) {
+    if (userEvents.isNotEmpty) {
+      var available = userEvents
+          .where((c) => c.eventId.trim() == eventID.trim())
+          .toList()
+          .length;
+      if (available == 1) {
+        return Colors.red;
+      } else {
+        return Colors.green;
+      }
+    } else {
+      return Colors.green;
+    }
+    //return Colors.amber;
+  }
+}

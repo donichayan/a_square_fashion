@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "833267280888",
+    "project_id": "fashion-prototype-668c6",
+    "storage_bucket": "fashion-prototype-668c6.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:833267280888:android:1f907f90a1ba9166a7440d",
+        "android_client_info": {
+          "package_name": "com.example.vie_fashion_week"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "833267280888-dpieckj5h31bj3d2je4951o7jcmvg69i.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC5vWV3U90skTBw7abqAoNYs133VieGjzk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "833267280888-dpieckj5h31bj3d2je4951o7jcmvg69i.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "833267280888-ar39ljkg0piqs6bp4il9pnrqlkc9h37b.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.vieFashionWeek"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
